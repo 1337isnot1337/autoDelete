@@ -39,22 +39,7 @@ export const settings = definePluginSettings({
 
     showChatBarButton: {
         type: OptionType.BOOLEAN,
-        description: "Show translate button in chat bar",
-        default: true
-    },
-    service: {
-        type: OptionType.SELECT,
-        description: IS_WEB ? "Translation service (Not supported on Web!)" : "Translation service",
-        disabled: () => IS_WEB,
-        options: [
-            { label: "Google Translate", value: "google", default: true },
-            { label: "DeepL Free", value: "deepl" },
-            { label: "DeepL Pro", value: "deepl-pro" }
-        ] as const,
-    },
-    showAutoTranslateTooltip: {
-        type: OptionType.BOOLEAN,
-        description: "Show a tooltip on the ChatBar button whenever a message is automatically translated",
+        description: "Show button in chat bar",
         default: true
     },
 }).withPrivateSettings<{

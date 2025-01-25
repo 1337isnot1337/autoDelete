@@ -8,13 +8,14 @@ import "./styles.css";
 
 import { addChatBarButton, removeChatBarButton } from "@api/ChatButtons";
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { addButton } from "@api/MessagePopover";
 import { getCurrentChannel, getCurrentGuild } from "@utils/discord";
 import { sleep } from "@utils/misc";
 import definePlugin, { PluginNative } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { Message } from "discord-types/general";
 import moment from "moment";
-import { MessageStore, UserStore } from "webpack/common";
+import { ChannelStore, MessageStore, UserStore } from "webpack/common";
 import { Menu } from "webpack/common/menu";
 
 import { DeleteChatBarIcon, DeleteIcon } from "./DeleteChangeIcon";
@@ -57,24 +58,18 @@ export async function addChannelToList(tooltipReturn: boolean) {
         await Native.changeChannelAndServer(currentChannel, currentServer, false);
         return;
     }
-    console.log(Native.getPath());
-    console.log("Was told to ");
+
     // true because adding in channal
     await Native.changeChannelAndServer(currentChannel, currentServer, true);
-    console.log("Ran");
-    console.log("Recieved from the func " + currentChannel + " and server " + currentServer + ".");
-
 
 }
 export async function getNameForToolTip(): Promise<string> {
     const currentChannel = getCurrentChannel()?.id as string;
     const currentServer = getCurrentGuild()?.id as string;
     if (await Native.isChannelInChannelList(currentServer, currentChannel)) {
-        console.log("That channel was found");
         return "Press to disable";
         // meaning it is currently active
     } else {
-        console.log("That channel was not found");
         return "Press to enable";
     }
 
@@ -108,8 +103,9 @@ export default definePlugin({
             } else {
                 return;
             }
-
-            console.log("Message ID " + message.id);
+            console.log("Logged for deletion");
+            // style message that will be deleted
+            styleMessageById(message.id, "#ffffff", "#3e0000");
             const raw_message: Message = MessageStore.getMessage(thisChanServ.channel_id, message.id);
             const simple_message: simplifiedMessage = {
                 id: raw_message.id,
@@ -117,13 +113,26 @@ export default definePlugin({
                 timestamp: moment.now(),
             };
             await Native.addToDeleteQueue(simple_message);
-            console.log("Logged");
 
         },
     },
     async start() {
-        console.log("Auto delete is running");
         addChatBarButton("silly", DeleteChatBarIcon);
+        addButton("vc-translate", message => {
+            if (!message.content) return null;
+
+            return {
+                label: "Save",
+                icon: DeleteIcon,
+                message,
+                channel: ChannelStore.getChannel(message.channel_id),
+                onClick: async () => {
+                    await Native.protectMessage(message.id, message.channel_id);
+                    styleMessageById(message.id, "#ffffff", "#000000");
+
+                }
+            };
+        });
         await sleep(settings.store.sleepBetweenCheckingDeletes);
         console.log("Beginning loop");
         while (true) {
@@ -159,6 +168,21 @@ export default definePlugin({
     },
 
 });
+function styleMessageById(messageId: string, textColor?: string, backgroundColor?: string): void {
+    const messageElement = document.querySelector(`li[id*="${messageId}"]`) as HTMLElement | null;
+
+    if (messageElement) {
+
+        if (backgroundColor) {
+            messageElement.style.backgroundColor = backgroundColor;
+        }
+
+        const textElement = messageElement.querySelector(".markup_f8f345") as HTMLElement | null;
+        if (textElement && textColor) {
+            textElement.style.color = textColor;
+        }
+    }
+}
 function deleteMessage(message: simplifiedMessage) {
     MessageActions.deleteMessage(message.channel_id, message.id);
     console.log("Deleted message");
