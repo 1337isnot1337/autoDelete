@@ -20,6 +20,11 @@ import { definePluginSettings } from "@api/Settings";
 import { OptionType } from "@utils/types";
 
 export const settings = definePluginSettings({
+    deleteAllMessagesEverywhere: {
+        type: OptionType.BOOLEAN,
+        description: "If this is enabled, messages EVERYWHERE will be deleted!",
+        default: false,
+    },
     totalSecondsBeforeDeletingMessage: {
         type: OptionType.NUMBER,
         description: "After this much time in seconds passes a message is deleted",

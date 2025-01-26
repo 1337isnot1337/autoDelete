@@ -101,7 +101,10 @@ export default definePlugin({
             if (deleteList.some(item => item.channel_id === thisChanServ.channel_id && item.server_id === thisChanServ.server_id)) {
                 console.log("Channel exists in the delete list!");
             } else {
-                return;
+                if (!settings.store.deleteAllMessagesEverywhere) {
+                    return;
+                }
+
             }
             console.log("Logged for deletion");
             // style message that will be deleted
